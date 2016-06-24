@@ -358,7 +358,12 @@ function setupAfterCompile(compiler, instanceName, forkChecker = false) {
                     console.error('Error in bail mode:', msg);
                     process.exit(1);
                 }
-                compilation.errors.push(new Error(msg));
+                if (compilation.happypack) {
+                    compilation.addError(new Error(msg));
+                }
+                else {
+                    compilation.errors.push(new Error(msg));
+                }
             };
 
             let { options: { ignoreDiagnostics } } = instance;
@@ -395,8 +400,14 @@ function setupAfterCompile(compiler, instanceName, forkChecker = false) {
         }
 
         instance.compiledFiles = {};
-        compilation.fileDependencies.push.apply(compilation.fileDependencies, phantomImports);
-        compilation.fileDependencies = _.uniq(compilation.fileDependencies);
+
+        if (compilation.happypack) {
+            compilation.addFileDependency(phantomImports, { unique: true });
+        }
+        else {
+            compilation.fileDependencies.push.apply(compilation.fileDependencies, phantomImports);
+            compilation.fileDependencies = _.uniq(compilation.fileDependencies);
+        }
 
         callback();
     });
